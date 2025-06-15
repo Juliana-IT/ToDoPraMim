@@ -7,6 +7,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import jakarta.validation.constraints.NotBlank;
+
+
 @Entity
 @Table(name="tarefa")
 public class Tarefa {
@@ -16,12 +19,13 @@ public class Tarefa {
 	private Long id;
 	
 	@Column(name="nome")
+	@NotBlank(message = "Nome deve ser preenchido")
 	private String nome;
 	
 	@Column(name="descricao")
+	@NotBlank(message = "Explique mais")
 	private String descricao;
 
-	
 	
 	public Tarefa() {
 		super();
