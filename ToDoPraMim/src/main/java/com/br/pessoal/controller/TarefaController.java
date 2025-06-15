@@ -6,7 +6,9 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,24 +23,27 @@ import com.br.pessoal.exception.ResourceNotFoundException;
 import com.br.pessoal.model.Tarefa;
 import com.br.pessoal.repository.TarefaRepository;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/ctarefa/")
 @CrossOrigin(origins="*")
+@Validated
 public class TarefaController {
 
 	@Autowired
 	private TarefaRepository tRep;
 	
-	//GET - http://localhost:8080/ctarefa/tarefa
-	@GetMapping("/tarefa")
+	//GET - http://localhost:8080/ctarefa/tarefas
+	@GetMapping("/tarefas")
 	public List<Tarefa> listar() {
 		
 		return this.tRep.findAll(Sort.by(Sort.Direction.ASC, "id"));
 		
 	}
 	
-	//GET - http://localhost:8080/ctarefa/tarefa/{id}
-	@GetMapping("/tarefa/{id}")
+	//GET - http://localhost:8080/ctarefa/tarefas/{id}
+	@GetMapping("/tarefas/{id}")
 	public ResponseEntity<Tarefa> consultar(@PathVariable Long id) {
 		
 		Tarefa tarefa = tRep.findById(id)
@@ -47,31 +52,47 @@ public class TarefaController {
 						return ResponseEntity.ok(tarefa);
 	}
 	
-	//POST - http://localhost:8080/ctarefa/tarefa
-	@PostMapping("/tarefa")
-	public Tarefa inserir(@RequestBody Tarefa tarefa) {
+	//POST - http://localhost:8080/ctarefa/tarefas
+	@PostMapping("/tarefas")
+	public ResponseEntity<Map<String, Object>> inserir(@Valid @RequestBody Tarefa tnova) {
 		
-		return tRep.save(tarefa); 
+		if (tRep.existsByNome(tnova.getNome())) {
+			throw new IllegalArgumentException("Já existe tarefa com esse nome");
+		}
+		tRep.save(tnova); 
+		
+		Map<String, Object> resposta = new HashMap<>();
+		resposta.put("success", true);
+		resposta.put("message", "Tarefa criada com sucesso");
+		resposta.put("data", tnova);
+		
+		return ResponseEntity
+				.status(HttpStatus.CREATED)
+				.body(resposta);
 	}
 	
-	//PUT - http://localhost:8080/ctarefa/tarefa/{id}
-	@PutMapping("/tarefa/{id}")
-	public ResponseEntity<Tarefa> alterar(@PathVariable Long id, @RequestBody Tarefa tarefa){
+	//PUT - http://localhost:8080/ctarefa/tarefas/{id}
+	@PutMapping("/tarefas/{id}")
+	public ResponseEntity<Map<String, Object>> alterar(@PathVariable Long id, @RequestBody Tarefa tarefa){
 		
 		Tarefa tarefaConsulta = tRep.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Tarefa não encontrada: " + id));
 		
-		tarefaConsulta.setId(id);
 		tarefaConsulta.setNome(tarefa.getNome());
 		tarefaConsulta.setDescricao(tarefa.getDescricao());
 		
 		tRep.save(tarefaConsulta); 
 		
-		return ResponseEntity.ok(tarefaConsulta);
+		Map<String, Object> resposta = new HashMap<>();
+		resposta.put("sucess", true);
+		resposta.put("message", "Tarefa atualizada com sucesso");
+		resposta.put("data", tarefaConsulta);
+		
+		return ResponseEntity.ok(resposta);
 	}
 	
-	//DELETE - http://localhost:8080/ctarefa/tarefa/{id}
-	@DeleteMapping("/tarefa/{id}")
+	//DELETE - http://localhost:8080/ctarefa/tarefas/{id}
+	@DeleteMapping("/tarefas/{id}")
 	public ResponseEntity<Map<String, Boolean>> excluir(@PathVariable Long id){
 		
 		Tarefa tarefa = tRep.findById(id)
