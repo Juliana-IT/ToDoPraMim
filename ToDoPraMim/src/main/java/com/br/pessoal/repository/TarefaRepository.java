@@ -8,4 +8,5 @@ import com.br.pessoal.model.Tarefa;
 @Repository
 public interface TarefaRepository extends JpaRepository<Tarefa, Long>{
 
+	boolean existsByNome(String nome);
 }
